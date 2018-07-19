@@ -21,7 +21,7 @@ def miller_rabin(n, k):
     return True
 
 
-# Thanks to wikibooks for the invert function, I modified it a bit to fit my needs
+# Thanks to wikibooks for the extended Euclidean algorithm, I modified it a bit to fit my needs
 # https://en.wikibooks.org/wiki/Algorithm_Implementation/Mathematics/Extended_Euclidean_algorithm
 def xgcd(b, a):
     x0, x1, y0, y1 = 1, 0, 0, 1
@@ -35,12 +35,14 @@ def xgcd(b, a):
 def mulinv(b, m):
     g, x, _ = xgcd(b, m)
     if gcd(b, m) == 1: return x % m
-    else: raise Exception("b is not relatively prime to n")
+    else: return -1
 
 
 # My code starts here #
 # Some read and write functions for the encryption.
 def readkey(keyname):
+    if type(keyname) != "type 'str'":
+        raise TypeError("Parameter keyname must be string")
     keyfile = open(keyname, "r+")
     key = keyfile.read()
     keyfile.close()
@@ -56,17 +58,24 @@ def readfile(filename):
 
 
 def writemessage(filename, message):
+    if type(filename) != "type 'str'" or type(message) != "type 'str'":
+        raise TypeError("Both parameters filename and message must be strings")
     file = open(filename, "w+")
     file.write(message)
     file.close()
 
 
 # Gets RSA module and Euler's totient function
-def getmodandphi(p, q): return [(p*q), ((p-1)*(q-1))]
+def getmodandphi(p, q):
+    if type(p) != "type 'int'" or type(q) != int or p<1 or q<1:
+        raise TypeError("Both parameters p and q must be positive integers")
+    return [(p*q), ((p-1)*(q-1))]
 
 
 # Self-explanatory
 def gcd(x, y):
+    if type(x) != int or type(y) != int or x<1 or y<1:
+        raise TypeError("Both parameters x and y must be positive integers")
     if x < y:
         z = x
         x = y
@@ -81,11 +90,18 @@ def gcd(x, y):
 # Generates RSA-keys from two given numbers. If the product is less than 256, please set override_minlength to True.
 # p, q = int, override_minlength = boolean
 def generatekeys(p, q, override_minlength):
-    if p == q: raise Exception("p and q cannot be the same number")
-    if not miller_rabin(p, 80): raise Exception("p is not a prime number")
-    if not miller_rabin(q, 80): raise Exception("q is not a prime number")
+    if type(override_minlength) != "type 'boolean'":
+        raise TypeError("override_minlength must be boolean")
+    if type(p) != int or type(q) != int or p<1 or q<1:
+        raise TypeError("Both parameters p and q must be positive integers.")
+    if p == q:
+        raise ValueError("p and q cannot be the same number")
+    if not miller_rabin(p, 80):
+        raise ValueError("p is not a prime number")
+    if not miller_rabin(q, 80):
+        raise ValueError("q is not a prime number")
     if p*q < 256 and not override_minlength:
-        raise Exception("Product of p and q must be at least 256 to work with the encryption and decryption properly")
+        raise ValueError("Product of p and q must be at least 256 to work with the encryption and decryption properly")
     m, phi, d = getmodandphi(p, q)[0], getmodandphi(p, q)[1], secrets.randbelow((p-1)*(q-1) - 3) + 2
     while not gcd(d, phi) == 1: d = secrets.randbelow(phi - 3) + 2
     e = mulinv(d, phi)
@@ -97,10 +113,13 @@ def generatekeys(p, q, override_minlength):
 def generatebitkeys(bitlength):
     p = secrets.randbits(bitlength)
     q = secrets.randbits(bitlength)
-    while not miller_rabin(p, 80): p = secrets.randbits(bitlength)
-    while not miller_rabin(q, 80) and not p == q: q = secrets.randbits(bitlength)
+    while not miller_rabin(p, 80):
+        p = secrets.randbits(bitlength)
+    while not miller_rabin(q, 80) and not p == q:
+        q = secrets.randbits(bitlength)
     m, phi, d = p*q, (p-1)*(q-1), secrets.randbelow((p-1)*(q-1)-3)+2
-    while not gcd(d, phi) == 1: d = secrets.randbelow(phi-3)+2
+    while not gcd(d, phi) == 1:
+        d = secrets.randbelow(phi-3)+2
     e = mulinv(d, phi)
     writemessage("privateKey.rsa", (str(d) + " " + str(m)))
     writemessage("publicKey.rsa", (str(e) + " " + str(m)))
@@ -115,31 +134,37 @@ def crypt(intmessage, keynumber, mod): return pow(int(intmessage), int(keynumber
 
 # Converts ASCII code to integers.
 def ascii_to_int(message):
+    if type(message) !=
     intmsg = ""
     for x in range(len(message)):
         piece = str(ord(message[x:x + 1]))
-        if len(str(piece)) < 3: piece = "0" + piece
+        if len(str(piece)) < 3:
+            piece = "0" + piece
         intmsg += piece
     return intmsg
 
 
 # Converts a converted integer back to ASCII code.
 def int_to_ascii(intmsg):
-    while not len(intmsg) % 3 == 0: intmsg = "0" + intmsg
+    while not len(intmsg) % 3 == 0:
+        intmsg = "0" + intmsg
     declist = []
-    for x in range(int(len(intmsg)/3)): declist.append(intmsg[(3*x):(3*x)+3])
+    for x in range(int(len(intmsg)/3)):
+        declist.append(intmsg[(3*x):(3*x)+3])
     message = ""
-    for x in range(len(declist)): message += chr(int(declist[x]))
+    for x in range(len(declist)):
+        message += chr(int(declist[x]))
     return message
 
 
 # Encrypts a file (which must only contain ASCII characters) and saves the decrypted file to the entered destination.
 def encrypt(filename, destination):
     # Checks if keys match
-    if readkey("publicKey.rsa")[1] != readkey("privateKey.rsa")[1]: raise Exception("Keys don't match")
+    if readkey("publicKey.rsa")[1] != readkey("privateKey.rsa")[1]:
+        raise ValueError("Keys don't match")
     message = readfile(filename)
     parts = []
-    for i in range(math.ceil(len(message)/maxlen("publicKey.rsa"))):
+    for i in range(int(math.ceil(len(message)/maxlen("publicKey.rsa")))):
         parts.append(message[i*maxlen("publicKey.rsa"):(i+1)*maxlen("publicKey.rsa")])
     message = ""
     for i in range(len(parts)):
