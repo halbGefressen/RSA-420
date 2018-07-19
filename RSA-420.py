@@ -1,6 +1,5 @@
 import math
 import secrets
-
 # Thanks to Ayrx for providing the code for Miller-Rabin test, I changed it up a bit though
 # https://gist.github.com/Ayrx/5884790
 def miller_rabin(n, k):
@@ -90,9 +89,9 @@ def gcd(x, y):
 # Generates RSA-keys from two given numbers. If the product is less than 256, please set override_minlength to True.
 # p, q = int, override_minlength = boolean
 def generatekeys(p, q, override_minlength):
-    if type(override_minlength) != "type 'boolean'":
+    if type(override_minlength) is not boolean:
         raise TypeError("override_minlength must be boolean")
-    if type(p) != int or type(q) != int or p<1 or q<1:
+    if type(p) is not int or type(q) is not int or p<1 or q<1:
         raise TypeError("Both parameters p and q must be positive integers.")
     if p == q:
         raise ValueError("p and q cannot be the same number")
@@ -134,7 +133,7 @@ def crypt(intmessage, keynumber, mod): return pow(int(intmessage), int(keynumber
 
 # Converts ASCII code to integers.
 def ascii_to_int(message):
-    if type(message) !=
+    message = str(message)
     intmsg = ""
     for x in range(len(message)):
         piece = str(ord(message[x:x + 1]))
@@ -146,6 +145,7 @@ def ascii_to_int(message):
 
 # Converts a converted integer back to ASCII code.
 def int_to_ascii(intmsg):
+    intmsg = str(intmsg)
     while not len(intmsg) % 3 == 0:
         intmsg = "0" + intmsg
     declist = []
