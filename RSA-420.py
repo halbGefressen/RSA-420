@@ -254,29 +254,4 @@ def decrypt_file(filename,destination="decrypted.xx", keyname="privateKey.rsa"):
     message = decrypt(message, keyname)
     print(message)
     hex_to_file(message, destination)
-
-
-# Test methods
-def testasciiencryption(message=None):
-    if message:
-        a = message
-    else:
-        a = "ösldfgihjdflkgjdsöflg"
-    print("Encrypting...")
-    b = encrypt_ascii(a)
-    print("Success!")
-    print("Decrypting...")
-    c = decrypt_ascii(b)
-    print("Success!")
-    print("Results:")
-    print("Original string: " + str(a))
-    print("Encrypted string: " +str(b))
-    print("Decrypted string: " + str(c))
-    print()
-    if a == c:
-        print("Verschlüsselung erfolgreich.")
-    else:
-        print("Verschlüsselung fehlgeschlagen.")
-
-generatebitkeys(32)
-testasciiencryption()
+    
